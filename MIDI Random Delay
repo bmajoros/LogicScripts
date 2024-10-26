@@ -1,0 +1,49 @@
+/*
+With Scripter, you can use JavaScript to create your own custom MIDI processing
+effects, including slider controls for real-time interaction.
+ 
+For detailed information about using Scripter, including code samples,
+see the MIDI plug-ins chapter of the Logic Pro X Effects or
+MainStage 3 Effects manual.
+*/
+ 
+var PluginParameters = [];
+var noteDelay = [];
+for (var i = 0; i < 128; i++) {
+noteDelay[i] = 0;
+}
+var keep = 0;
+var maxDelay = 0;
+ 
+createParam('Random delay max ms', 'lin', 0, 0, 1200, 0, 1200, 'ms');
+createParam('Keep original note? ', 'menu', ['Off', 'On '],0,1,0);
+ 
+function ParameterChanged(p,v){
+p ? keep = v : maxDelay = v;
+}
+function HandleMIDI(e){
+if(e instanceof Note){
+e instanceof NoteOn ? e.delay = randomDelay(0, maxDelay):e.delay = noteDelay[e.pitch];
+e instanceof NoteOn ? noteDelay[e.pitch] = e.delay:false;
+keep ? e.send():false;
+e.sendAfterMilliseconds([e.delay]);
+}
+else
+e.send();
+}
+ 
+function createParam(n, t, vs, miv, mav, def, nos, unit) {
+                PluginParameters.push({
+                                name: n,
+                                type: t,
+                                valueStrings: vs,
+                                minValue: miv,
+                                maxValue: mav,
+                                defaultValue: def,
+                                numberOfSteps: nos,
+                                unit: unit
+                });
+}
+function randomDelay(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+}
